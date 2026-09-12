@@ -1,34 +1,44 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Lock, Rocket } from 'lucide-react'
+import { AlertTriangle, Lock, RefreshCw, Rocket } from 'lucide-react'
 
 export function AdminSetupView() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [setupRequired, setSetupRequired] = useState(false)
+  const [setupRequired, setSetupRequired] = useState<boolean | null>(null)
+  const [initError, setInitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function checkSetup() {
-      try {
-        const res = await fetch('/api/auth/setup-admin')
-        const data = await res.json()
-        if (res.ok && data.success) {
-          setSetupRequired(data.setupRequired)
-        }
-      } catch {
-        setErrorMsg('Error checking setup status.')
-      } finally {
-        setLoading(false)
+  const checkSetup = useCallback(async () => {
+    setLoading(true)
+    setInitError(null)
+    try {
+      const res = await fetch('/api/auth/setup-admin', { cache: 'no-store' })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to check admin setup status.')
       }
+      setSetupRequired(Boolean(data.setupRequired))
+    } catch (err) {
+      setInitError(
+        err instanceof Error
+          ? err.message
+          : 'Error connecting to database. Please check your connection and retry.'
+      )
+      setSetupRequired(null)
+    } finally {
+      setLoading(false)
     }
-    void checkSetup()
   }, [])
+
+  useEffect(() => {
+    void checkSetup()
+  }, [checkSetup])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,7 +72,35 @@ export function AdminSetupView() {
     )
   }
 
-  if (!setupRequired) {
+  if (initError || setupRequired === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="w-full max-w-md rounded-3xl border border-red-200 bg-white p-8 shadow-xl text-center space-y-4">
+          <div className="flex justify-center">
+            <AlertTriangle className="h-10 w-10 text-red-500" aria-hidden="true" />
+          </div>
+          <h1 className="text-xl font-bold text-slate-900">Database Connection Issue</h1>
+          <p className="text-sm text-slate-600">
+            {initError || 'Unable to verify store initialization status.'}
+          </p>
+          <div className="pt-2 flex flex-col gap-2">
+            <Button
+              onClick={() => void checkSetup()}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold inline-flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Retry Connection
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/')} className="w-full font-medium">
+              Back to Storefront
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (setupRequired === false) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl text-center space-y-4">
