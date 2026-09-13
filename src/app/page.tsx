@@ -8,6 +8,7 @@
 import { homepageService } from '@/services/homepage.service'
 import { storeSettingsService } from '@/services/store-settings.service'
 import { SectionRenderer } from '@/lib/sectionRenderer'
+import { FloatingWhatsAppButton } from '@/components/home'
 
 export const revalidate = 0 // Dynamic server rendering for live CMS updates
 
@@ -22,7 +23,7 @@ export default async function Home() {
   const enabledSections = sectionsRes.status === 'fulfilled' ? sectionsRes.value : []
   const publicSettings = settingsRes.status === 'fulfilled'
     ? settingsRes.value
-    : { storeName: 'CTools Store', storeTagline: null, storeDescription: null }
+    : { storeName: 'CTools Store', storeTagline: null, storeDescription: null, whatsapp: null }
   const homepageData = dataRes.status === 'fulfilled' ? dataRes.value : undefined
 
   return (
@@ -40,6 +41,12 @@ export default async function Home() {
           homepageData={homepageData}
         />
       ))}
+
+      {/* Floating WhatsApp Action Button */}
+      <FloatingWhatsAppButton
+        phoneNumber={publicSettings.whatsapp}
+        storeName={publicSettings.storeName}
+      />
     </div>
   )
 }

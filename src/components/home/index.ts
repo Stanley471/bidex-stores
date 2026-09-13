@@ -13,3 +13,4 @@ export { NewArrivals } from './NewArrivals';
 export { PromoBanner } from './PromoBanner';
 export { WhyChooseUs } from './WhyChooseUs';
 export { Newsletter } from './Newsletter';
+export { FloatingWhatsAppButton } from './FloatingWhatsAppButton';
