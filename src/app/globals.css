@@ -136,6 +136,16 @@
   }
 }
 
+/* Utilities */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
 /* FLOATING WHATSAPP BUTTON COMPONENT */
 .floating-whatsapp-btn {
   position: fixed;

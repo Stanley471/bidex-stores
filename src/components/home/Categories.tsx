@@ -120,10 +120,10 @@ function CategoryCardItem({ category }: { category: CategoryItem }) {
   return (
     <Link
       href={`/products?category=${category.slug}`}
-      className="group flex flex-col items-center text-center rounded-xl sm:rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50/70 to-slate-50/20 p-3 sm:p-4 hover:bg-white hover:border-brand-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+      className="group flex flex-col items-center text-center rounded-xl sm:rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50/70 to-slate-50/20 p-2.5 sm:p-4 hover:bg-white hover:border-brand-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer w-[100px] min-[380px]:w-[110px] sm:w-auto shrink-0 snap-start"
     >
       {/* Category Icon Container */}
-      <div className="relative h-14 w-14 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center p-2.5 mb-2.5 group-hover:border-brand-primary/40 group-hover:shadow-xs group-hover:bg-brand-primary/5 transition-all duration-200">
+      <div className="relative h-13 w-13 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center p-2 mb-2 sm:mb-2.5 group-hover:border-brand-primary/40 group-hover:shadow-xs group-hover:bg-brand-primary/5 transition-all duration-200">
         {hasValidImg ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -134,14 +134,14 @@ function CategoryCardItem({ category }: { category: CategoryItem }) {
           />
         ) : (
           <IconComponent
-            className="h-7 w-7 sm:h-8 sm:w-8 text-brand-primary transition-transform duration-300 group-hover:scale-110"
+            className="h-6 w-6 sm:h-8 sm:w-8 text-brand-primary transition-transform duration-300 group-hover:scale-110"
             aria-hidden="true"
           />
         )}
       </div>
 
       {/* Category Details */}
-      <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 group-hover:text-brand-primary transition-colors line-clamp-1 w-full">
+      <h3 className="text-[11px] sm:text-sm font-extrabold text-slate-900 group-hover:text-brand-primary transition-colors line-clamp-1 w-full px-0.5">
         {category.name}
       </h3>
 
@@ -161,9 +161,10 @@ export function Categories({ config, categories: initialCategories }: Categories
   const rawCategories = initialCategories ?? clientData.data?.categories ?? []
   const loading = initialCategories ? false : clientData.loading
 
-  const activeCategories = rawCategories
-    .filter((cat) => (cat.productCount ?? 0) > 0)
-    .slice(0, limit)
+  const categoriesWithProducts = rawCategories.filter((cat) => (cat.productCount ?? 0) > 0)
+  const activeCategories = (
+    categoriesWithProducts.length > 0 ? categoriesWithProducts : rawCategories
+  ).slice(0, limit)
 
   return (
     <section className="py-3 px-2 sm:px-4 max-w-6xl mx-auto">
@@ -185,9 +186,11 @@ export function Categories({ config, categories: initialCategories }: Categories
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3.5 sm:p-5 bg-white border-x border-b border-slate-200 rounded-b-lg">
+        <div className="flex overflow-x-auto sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3 p-3 sm:p-5 bg-white border-x border-b border-slate-200 rounded-b-lg scrollbar-none snap-x">
           {Array.from({ length: Math.min(limit, 6) }).map((_, i) => (
-            <SkeletonCategoryCard key={i} />
+            <div key={i} className="w-[100px] min-[380px]:w-[110px] sm:w-auto shrink-0 snap-start">
+              <SkeletonCategoryCard />
+            </div>
           ))}
         </div>
       ) : activeCategories.length === 0 ? (
@@ -195,7 +198,7 @@ export function Categories({ config, categories: initialCategories }: Categories
           No featured categories with items available right now.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3.5 sm:p-5 bg-white border-x border-b border-slate-200 rounded-b-lg shadow-xs">
+        <div className="flex overflow-x-auto sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3 p-3 sm:p-5 bg-white border-x border-b border-slate-200 rounded-b-lg shadow-xs scrollbar-none snap-x">
           {activeCategories.map((category) => (
             <CategoryCardItem key={category.id} category={category} />
           ))}
