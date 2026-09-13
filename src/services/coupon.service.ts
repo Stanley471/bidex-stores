@@ -154,7 +154,7 @@ class CouponService {
     return { success: true }
   }
 
-  async validateCoupon(code: string, userId: string, subtotal: number) {
+  async validateCoupon(code: string, userId: string | null | undefined, subtotal: number) {
     const normalizedCode = code.trim().toUpperCase()
     const now = new Date()
 
@@ -187,17 +187,19 @@ class CouponService {
       throw new Error('Coupon usage limit reached.')
     }
 
-    // Rule 6: Per-User Limit
-    const perUserLimit = coupon.perUserLimit ?? 1
-    const userUsageCount = await prisma.couponUsage.count({
-      where: {
-        couponId: coupon.id,
-        userId,
-      },
-    })
+    // Rule 6: Per-User Limit (applied when user is authenticated)
+    if (userId) {
+      const perUserLimit = coupon.perUserLimit ?? 1
+      const userUsageCount = await prisma.couponUsage.count({
+        where: {
+          couponId: coupon.id,
+          userId,
+        },
+      })
 
-    if (userUsageCount >= perUserLimit) {
-      throw new Error('You have already used this coupon the maximum allowed number of times.')
+      if (userUsageCount >= perUserLimit) {
+        throw new Error('You have already used this coupon the maximum allowed number of times.')
+      }
     }
 
     // Rule 7: Minimum Order Amount

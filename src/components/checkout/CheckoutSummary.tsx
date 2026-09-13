@@ -106,7 +106,10 @@ export function CheckoutSummary({
       const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCodeInput.trim() }),
+        body: JSON.stringify({
+          code: couponCodeInput.trim(),
+          subtotal: cart.summary.subtotal,
+        }),
       })
 
       const data = await res.json()
