@@ -67,7 +67,6 @@ export async function middleware(request: NextRequest) {
   }
 
   if (
-    pathname.startsWith('/checkout') ||
     pathname.startsWith('/orders') ||
     pathname.startsWith('/account') ||
     pathname.startsWith('/dashboard')
@@ -85,7 +84,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/checkout/:path*',
     '/orders/:path*',
     '/account/:path*',
     '/dashboard/:path*',

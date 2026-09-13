@@ -32,6 +32,7 @@ export function AddressSelector({ selectedAddressId, onSelectAddress }: AddressS
   const fetchAddresses = useCallback(async () => {
     try {
       const res = await fetch('/api/addresses')
+      if (res.status === 401) return
       const data = await res.json()
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to load addresses')
@@ -61,7 +62,7 @@ export function AddressSelector({ selectedAddressId, onSelectAddress }: AddressS
               const defaultAddr = data.addresses.find((a: Address) => a.isDefault) || data.addresses[0]
               onSelectAddress(defaultAddr.id)
             }
-          } else {
+          } else if (res.status !== 401) {
             setError(data.message || 'Failed to load addresses')
           }
         }
