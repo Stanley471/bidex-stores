@@ -60,7 +60,7 @@ export function CheckoutForm({
         />
       </section>
 
-      {/* 2. Payment Method */}
+      {/* 2. Payment Method (Commented out for WhatsApp direct checkout flow)
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-100 pb-3">
           Payment Method
@@ -90,7 +90,7 @@ export function CheckoutForm({
                       type="radio"
                       name="paymentMethod"
                       checked={isSelected}
-                      onChange={() => onChangePaymentMethod(opt.id)}
+                      onChange={() => onChangePaymentMethod?.(opt.id)}
                       className="h-4 w-4 text-slate-900 focus:ring-slate-900"
                     />
                   </div>
@@ -100,6 +100,18 @@ export function CheckoutForm({
             )
           })}
         </div>
+      </section>
+      */}
+
+      {/* 2. WhatsApp Direct Checkout Notice */}
+      <section className="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-sm space-y-2">
+        <div className="flex items-center gap-2 text-emerald-900 font-semibold text-sm">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[11px] font-bold">✓</span>
+          Direct WhatsApp Ordering
+        </div>
+        <p className="text-xs text-emerald-800 leading-relaxed">
+          No online payment gateway or card input is required. Clicking &quot;Order on WhatsApp&quot; will create your formatted order message and connect you directly with our sales representative on WhatsApp.
+        </p>
       </section>
 
       {/* 3. Additional Order Notes */}
