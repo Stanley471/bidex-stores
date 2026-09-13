@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { createContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import type { CartContextValue, CartState } from '@/types/cart';
 import { cartService } from '@/services/cart.service';
 import { clearCartStorage, loadCartFromStorage, saveCartToStorage } from '@/lib/cart/cartStorage';
@@ -22,14 +22,19 @@ export const CartContext = createContext<CartContextValue | undefined>(undefined
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartState>(initialCartState);
   const [isOpen, setIsOpen] = useState(false);
+  const isHydratedRef = useRef(false);
 
   // Sync with Database API if user is authenticated
   const fetchDbCart = useCallback(async () => {
     try {
       const res = await fetch('/api/cart');
+      if (res.status === 401) {
+        return false;
+      }
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok && data.success && data.cart) {
         setCart(data.cart);
+        saveCartToStorage(data.cart);
         return true;
       }
     } catch {
@@ -38,28 +43,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return false;
   }, []);
 
+  // Initial hydration: load from localStorage immediately, then check if logged-in user has server cart
   useEffect(() => {
     async function init() {
-      const synced = await fetchDbCart();
-      if (!synced) {
-        const storedCart = loadCartFromStorage();
-        if (storedCart) {
-          setCart(cartService.validateCart(storedCart));
-        }
+      // 1. Load from localStorage for immediate display (works for guests & offline)
+      const storedCart = loadCartFromStorage();
+      if (storedCart) {
+        setCart(cartService.validateCart(storedCart));
       }
+
+      // 2. If logged in, sync with authoritative server cart
+      await fetchDbCart();
+
+      isHydratedRef.current = true;
     }
-    init();
+    void init();
   }, [fetchDbCart]);
 
+  // Persist local cart state to localStorage on changes (only after hydration)
   useEffect(() => {
+    if (!isHydratedRef.current) return;
     saveCartToStorage(cart);
   }, [cart]);
 
   const addItem = async (product: Parameters<CartContextValue['addItem']>[0], quantity = 1, variantId?: string) => {
-    // Optimistic update — reflect the change in UI immediately
+    // 1. Update local client state and localStorage immediately (supports guest checkout)
     const previousCart = cart;
-    setCart((currentCart) => cartService.addProduct(currentCart, product, quantity, variantId));
+    const updatedCart = cartService.addProduct(cart, product, quantity, variantId);
+    setCart(updatedCart);
+    saveCartToStorage(updatedCart);
 
+    // 2. Sync with database if logged in
     try {
       const res = await fetch('/api/cart/items', {
         method: 'POST',
@@ -70,43 +84,60 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           quantity,
         }),
       });
+
+      // Guest user (unauthenticated) — this is expected. Keep local cart!
+      if (res.status === 401) {
+        return;
+      }
+
       const data = await res.json();
       if (res.ok && data.success) {
-        setCart(data.cart); // Sync with server's authoritative state
+        setCart(data.cart); // Sync with server state
+        saveCartToStorage(data.cart);
       } else if (!res.ok && data.message) {
-        if (res.status !== 401) alert(data.message);
-        setCart(previousCart); // Roll back on error
+        alert(data.message);
+        setCart(previousCart); // Roll back only on real server inventory rejection
+        saveCartToStorage(previousCart);
       }
     } catch {
-      setCart(previousCart); // Roll back on network failure
+      // Network failure / offline — retain local cart
     }
   };
 
   const removeItem = async (itemId: string) => {
-    // Optimistic update
     const previousCart = cart;
-    setCart((currentCart) => cartService.removeProduct(currentCart, itemId));
+    const updatedCart = cartService.removeProduct(cart, itemId);
+    setCart(updatedCart);
+    saveCartToStorage(updatedCart);
 
     try {
       const res = await fetch(`/api/cart/items/${itemId}`, {
         method: 'DELETE',
       });
+
+      if (res.status === 401) {
+        return; // Guest user — keep local removal
+      }
+
       const data = await res.json();
       if (res.ok && data.success) {
         setCart(data.cart);
+        saveCartToStorage(data.cart);
       } else if (!res.ok && data.message) {
-        if (res.status !== 401) alert(data.message);
-        setCart(previousCart); // Roll back on error
+        alert(data.message);
+        setCart(previousCart);
+        saveCartToStorage(previousCart);
       }
     } catch {
-      setCart(previousCart); // Roll back on network failure
+      // Retain local removal on network failure
     }
   };
 
   const updateQuantity = async (itemId: string, quantity: number) => {
-    // Optimistic update
     const previousCart = cart;
-    setCart((currentCart) => cartService.updateQuantity(currentCart, itemId, quantity));
+    const updatedCart = cartService.updateQuantity(cart, itemId, quantity);
+    setCart(updatedCart);
+    saveCartToStorage(updatedCart);
 
     try {
       const res = await fetch(`/api/cart/items/${itemId}`, {
@@ -114,35 +145,44 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity }),
       });
+
+      if (res.status === 401) {
+        return; // Guest user — keep local update
+      }
+
       const data = await res.json();
       if (res.ok && data.success) {
         setCart(data.cart);
+        saveCartToStorage(data.cart);
       } else if (!res.ok && data.message) {
-        if (res.status !== 401) alert(data.message);
-        setCart(previousCart); // Roll back on error
+        alert(data.message);
+        setCart(previousCart);
+        saveCartToStorage(previousCart);
       }
     } catch {
-      setCart(previousCart); // Roll back on network failure
+      // Retain local update on network failure
     }
   };
 
   const clearCart = useCallback(async () => {
+    setCart((currentCart) => cartService.clear(currentCart));
+    clearCartStorage();
+
     try {
       const res = await fetch('/api/cart', {
         method: 'DELETE',
       });
+      if (res.status === 401) {
+        return;
+      }
       const data = await res.json();
       if (res.ok && data.success) {
         setCart(data.cart);
         clearCartStorage();
-        return;
       }
     } catch {
       // Fallback
     }
-
-    setCart((currentCart) => cartService.clear(currentCart));
-    clearCartStorage();
   }, []);
 
   const value = useMemo<CartContextValue>(

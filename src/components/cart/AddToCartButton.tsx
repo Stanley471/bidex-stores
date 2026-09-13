@@ -23,9 +23,11 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const { addItem, openCart } = useCart();
 
-  const handleAdd = () => {
+  const handleAdd = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (disabled) return;
-    addItem(product, quantity, variantId);
+    void addItem(product, quantity, variantId);
     openCart();
   };
 
