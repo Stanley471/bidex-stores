@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/useCart'
 import { Button } from '@/components/ui/button'
-import { Info } from 'lucide-react'
+import { Info, Building2, Copy, Check } from 'lucide-react'
 import { calculateOrderTotals } from '@/services/checkout.service'
 import { formatCurrency as formatCurrencyUtil } from '@/lib/currency'
 import { getWhatsAppCheckoutUrl } from '@/lib/whatsapp/checkout'
+import type { BankDetails } from './CheckoutContent'
 
 interface CheckoutSummaryProps {
   selectedAddressId: string | null
   paymentMethod: string
   notes: string
+  bankDetails?: BankDetails | null
 }
 
 interface ShippingCalculation {
@@ -26,6 +28,7 @@ export function CheckoutSummary({
   selectedAddressId,
   paymentMethod,
   notes,
+  bankDetails,
 }: CheckoutSummaryProps) {
   const router = useRouter()
   const { cart, clearCart } = useCart()
@@ -33,21 +36,43 @@ export function CheckoutSummary({
   const [loadingStep, setLoadingStep] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [currencyCode, setCurrencyCode] = useState('NGN')
+  const [bankInfo, setBankInfo] = useState<BankDetails | null>(bankDetails || null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    async function loadCurrency() {
+    async function loadSettings() {
       try {
         const res = await fetch('/api/settings/public')
         const data = await res.json()
-        if (res.ok && data.success && data.settings?.currencyCode) {
-          setCurrencyCode(data.settings.currencyCode)
+        if (res.ok && data.success && data.settings) {
+          if (data.settings.currencyCode) {
+            setCurrencyCode(data.settings.currencyCode)
+          }
+          if (data.settings.bankName || data.settings.accountNumber || data.settings.accountName) {
+            setBankInfo((prev) => prev || {
+              bankName: data.settings.bankName || null,
+              accountNumber: data.settings.accountNumber || null,
+              accountName: data.settings.accountName || null,
+            })
+          }
         }
       } catch {
         // Fallback default retained
       }
     }
-    void loadCurrency()
+    void loadSettings()
   }, [])
+
+  const handleCopyAccountNumber = async () => {
+    if (!bankInfo?.accountNumber) return
+    try {
+      await navigator.clipboard.writeText(bankInfo.accountNumber)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback
+    }
+  }
 
   const fmtCurrency = (val: number) => formatCurrencyUtil(val, currencyCode)
 
@@ -327,6 +352,71 @@ export function CheckoutSummary({
           </p>
         )}
       </div>
+
+      {/* Bank Transfer Details Section */}
+      {Boolean(bankInfo && (bankInfo.bankName || bankInfo.accountNumber || bankInfo.accountName)) && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Building2 className="h-4 w-4 text-slate-700" aria-hidden="true" />
+              Bank Transfer Details
+            </span>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              Direct Payment
+            </span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            {bankInfo?.bankName && (
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-[11px] text-slate-500 font-medium">Bank Name</span>
+                <span className="font-bold text-slate-900">{bankInfo.bankName}</span>
+              </div>
+            )}
+
+            {bankInfo?.accountNumber && (
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-[11px] text-slate-500 font-medium">Account Number</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-slate-900 text-sm tracking-wider">
+                    {bankInfo.accountNumber}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyAccountNumber}
+                    className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition active:scale-95"
+                    title="Copy account number"
+                    aria-label="Copy account number"
+                  >
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {bankInfo?.accountName && (
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-[11px] text-slate-500 font-medium">Account Name</span>
+                <span className="font-semibold text-slate-900">{bankInfo.accountName}</span>
+              </div>
+            )}
+          </div>
+
+          {copied && (
+            <p className="text-[11px] font-medium text-emerald-700 text-center bg-emerald-50 border border-emerald-200/60 py-1 rounded-lg animate-in fade-in duration-200">
+              ✓ Account number copied to clipboard
+            </p>
+          )}
+
+          <p className="text-[11px] text-slate-400 italic pt-1 border-t border-slate-100 leading-snug">
+            Pay via bank transfer, then proceed below to confirm your order and share payment proof over WhatsApp.
+          </p>
+        </div>
+      )}
 
       <Button
         className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors"

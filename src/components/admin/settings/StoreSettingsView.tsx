@@ -32,6 +32,9 @@ interface StoreSettingsData {
   senderName: string | null
   senderEmail: string | null
   merchantNotificationEmail: string | null
+  bankName: string | null
+  accountNumber: string | null
+  accountName: string | null
 }
 
 export function StoreSettingsView() {
@@ -60,6 +63,9 @@ export function StoreSettingsView() {
     senderName: 'CTools Store',
     senderEmail: '',
     merchantNotificationEmail: '',
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
   })
 
   const [loading, setLoading] = useState(true)
@@ -104,6 +110,9 @@ export function StoreSettingsView() {
             senderName: s.senderName || '',
             senderEmail: s.senderEmail || '',
             merchantNotificationEmail: s.merchantNotificationEmail || '',
+            bankName: s.bankName || '',
+            accountNumber: s.accountNumber || '',
+            accountName: s.accountName || '',
           })
         }
       } catch {
@@ -393,6 +402,53 @@ export function StoreSettingsView() {
               value={form.businessAddress || ''}
               onChange={(e) => setForm({ ...form, businessAddress: e.target.value })}
               placeholder="12 Commercial Avenue, Ikeja, Lagos, Nigeria"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Add bank account details for direct payments */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            Add bank account details for direct payments
+          </h2>
+          <span className="text-[11px] font-medium text-slate-500">
+            Displayed on checkout for customers paying via direct bank transfer
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="space-y-1">
+            <label className="font-semibold text-slate-700">Bank Name</label>
+            <input
+              type="text"
+              value={form.bankName || ''}
+              onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+              placeholder="e.g. Access Bank, GTBank, Zenith"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-semibold text-slate-700">Account Number</label>
+            <input
+              type="text"
+              value={form.accountNumber || ''}
+              onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
+              placeholder="e.g. 0123456789"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-900 font-mono focus:border-slate-900 focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-semibold text-slate-700">Account Name</label>
+            <input
+              type="text"
+              value={form.accountName || ''}
+              onChange={(e) => setForm({ ...form, accountName: e.target.value })}
+              placeholder="e.g. Bidex Phones Ltd"
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
             />
           </div>
