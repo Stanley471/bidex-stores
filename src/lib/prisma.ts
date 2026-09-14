@@ -14,7 +14,7 @@ if (!connectionString) {
 }
 
 // Reset stale cached Prisma client and pg.Pool on globalThis if version changes or schema is updated
-const SCHEMA_VERSION = '2026_09_12_pool_reconnect'
+const SCHEMA_VERSION = '2026_09_13_bank_transfer'
 const globalWithVersion = globalThis as typeof globalThis & {
   __PRISMA_SCHEMA_VERSION__?: string
 }

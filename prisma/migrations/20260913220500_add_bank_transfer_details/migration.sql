@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "StoreSettings" 
+ADD COLUMN IF NOT EXISTS "bankName" TEXT,
+ADD COLUMN IF NOT EXISTS "accountNumber" TEXT,
+ADD COLUMN IF NOT EXISTS "accountName" TEXT;

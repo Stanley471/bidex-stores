@@ -26,6 +26,9 @@ export interface UpdateStoreSettingsInput {
   senderName?: string | null
   senderEmail?: string | null
   merchantNotificationEmail?: string | null
+  bankName?: string | null
+  accountNumber?: string | null
+  accountName?: string | null
 }
 
 class StoreSettingsService {
@@ -77,6 +80,9 @@ class StoreSettingsService {
       senderName: settings.senderName ?? 'CTools Store',
       senderEmail: settings.senderEmail ?? null,
       merchantNotificationEmail: settings.merchantNotificationEmail ?? null,
+      bankName: settings.bankName || null,
+      accountNumber: settings.accountNumber || null,
+      accountName: settings.accountName || null,
       createdAt: settings.createdAt.toISOString(),
       updatedAt: settings.updatedAt.toISOString(),
     }
@@ -107,6 +113,9 @@ class StoreSettingsService {
       youtube: settings.youtube,
       isStoreActive: settings.isStoreActive,
       acceptOrders: settings.acceptOrders,
+      bankName: settings.bankName,
+      accountNumber: settings.accountNumber,
+      accountName: settings.accountName,
     }
   }
 
@@ -197,6 +206,9 @@ class StoreSettingsService {
         ...(input.senderName !== undefined ? { senderName: input.senderName?.trim() || null } : {}),
         ...(input.senderEmail !== undefined ? { senderEmail: input.senderEmail?.trim() || null } : {}),
         ...(input.merchantNotificationEmail !== undefined ? { merchantNotificationEmail: input.merchantNotificationEmail?.trim() || null } : {}),
+        ...(input.bankName !== undefined ? { bankName: input.bankName?.trim() || null } : {}),
+        ...(input.accountNumber !== undefined ? { accountNumber: input.accountNumber?.trim() || null } : {}),
+        ...(input.accountName !== undefined ? { accountName: input.accountName?.trim() || null } : {}),
       },
     })
 
